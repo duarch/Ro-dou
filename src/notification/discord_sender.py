@@ -50,6 +50,8 @@ class DiscordSender(ISender):
             footer_text = remove_html_tags(self.footer_text)
             self.send_text(footer_text)
 
+        return {"channel": "discord", "sent": True}
+
     def send_text(self, content):
         self.send_data({"content": content})
 

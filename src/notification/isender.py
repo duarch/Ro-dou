@@ -33,7 +33,7 @@ class ISender(ABC):
         for report in search_report:
             highlighted_reports.append(self._highlighted_reports(report))
 
-        self.send(highlighted_reports, report_date)
+        return self.send(highlighted_reports, report_date)
 
     def _highlighted_reports(self, search_report: dict) -> dict:
         """Replace placeholders with specific formatting depending on

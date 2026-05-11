@@ -6,11 +6,35 @@ import os
 import pytest
 from typing import Tuple
 
-from dags.ro_dou_src.dou_dag_generator import (DouDigestDagGenerator,
-                                           SearchResult)
-from dags.ro_dou_src.parsers import YAMLParser
-from dags.ro_dou_src.searchers import DOUSearcher, INLABSSearcher
-from dags.ro_dou_src.hooks.inlabs_hook import INLABSHook
+_AIRFLOW_AVAILABLE = True
+try:
+    import airflow  # noqa: F401
+except ModuleNotFoundError:
+    _AIRFLOW_AVAILABLE = False
+
+if _AIRFLOW_AVAILABLE:
+    try:
+        # Airflow image layout (mounted `src` as `dags.ro_dou_src`)
+        from dags.ro_dou_src.dou_dag_generator import (
+            DouDigestDagGenerator,
+            SearchResult,
+        )
+        from dags.ro_dou_src.parsers import YAMLParser
+        from dags.ro_dou_src.searchers import DOUSearcher, INLABSSearcher
+        from dags.ro_dou_src.hooks.inlabs_hook import INLABSHook
+    except ModuleNotFoundError:
+        # Local/dev layout: import directly from repo `src/`
+        from dou_dag_generator import DouDigestDagGenerator, SearchResult
+        from parsers import YAMLParser
+        from searchers import DOUSearcher, INLABSSearcher
+        from hooks.inlabs_hook import INLABSHook
+else:
+    DouDigestDagGenerator = None  # type: ignore
+    SearchResult = dict  # type: ignore
+    YAMLParser = None  # type: ignore
+    DOUSearcher = None  # type: ignore
+    INLABSSearcher = None  # type: ignore
+    INLABSHook = None  # type: ignore
 
 TEST_AIRFLOW_HOME = '/opt/airflow'
 
@@ -38,10 +62,14 @@ def pytest_unconfigure(config):
 
 @pytest.fixture(scope='module')
 def dag_gen() -> DouDigestDagGenerator:
+    if not _AIRFLOW_AVAILABLE:
+        pytest.skip("Airflow not installed; skipping Airflow-dependent fixtures")
     return DouDigestDagGenerator()
 
 @pytest.fixture()
 def yaml_parser()-> YAMLParser:
+    if not _AIRFLOW_AVAILABLE:
+        pytest.skip("Airflow not installed; skipping Airflow-dependent fixtures")
     filepath = os.path.join(DouDigestDagGenerator().YAMLS_DIR,
                             "examples_and_tests",
                             'basic_example.yaml')
@@ -49,14 +77,20 @@ def yaml_parser()-> YAMLParser:
 
 @pytest.fixture()
 def dou_searcher()-> DOUSearcher:
+    if not _AIRFLOW_AVAILABLE:
+        pytest.skip("Airflow not installed; skipping Airflow-dependent fixtures")
     return DOUSearcher()
 
 @pytest.fixture()
 def inlabs_searcher()-> INLABSSearcher:
+    if not _AIRFLOW_AVAILABLE:
+        pytest.skip("Airflow not installed; skipping Airflow-dependent fixtures")
     return INLABSSearcher()
 
 @pytest.fixture()
 def inlabs_hook()-> INLABSHook:
+    if not _AIRFLOW_AVAILABLE:
+        pytest.skip("Airflow not installed; skipping Airflow-dependent fixtures")
     return INLABSHook()
 
 @pytest.fixture()

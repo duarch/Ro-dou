@@ -57,6 +57,7 @@ class SlackSender(ISender):
             footer_text = remove_html_tags(self.footer_text)
             self._add_header(footer_text)
         self._flush()
+        return {"channel": "slack", "sent": True}
 
     def _add_header(self, text):
         self.blocks.append(

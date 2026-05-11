@@ -138,3 +138,4 @@ test_notrack/
 **/mnt/pgdata/
 **/mnt/airflow-logs
 **/dag_confs/
+prompts/

@@ -28,7 +28,7 @@ class NotificationSender(ISender):
         """
         # Check if search_report is empty
         if not search_report:
-            return
+            return {"channel": "notification", "sent": False, "skipped": True}
 
         # Send header if exists
         if self.header_text:
@@ -42,6 +42,7 @@ class NotificationSender(ISender):
         # Finally, send the accumulated data
         message_payload = "\n".join(self.payload)
         self.send_chunked(message_payload)
+        return {"channel": "notification", "sent": True, "skipped": False}
 
     def _process_search_section(self, search: dict):
         """

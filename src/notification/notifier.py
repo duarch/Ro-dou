@@ -44,5 +44,8 @@ class Notifier:
             report_date (str): The date of the report
         """
 
+        results = []
         for sender in self.senders:
-            sender.send_report(search_report, report_date)
+            results.append(sender.send_report(search_report, report_date))
+
+        return results

@@ -47,9 +47,16 @@ class EmailSender(ISender):
 
         if skip_notification:
             if self.report_config.skip_null:
-                return "skip_notification"
+                return {
+                    "channel": "email",
+                    "sent": False,
+                    "skipped": True,
+                    "csv_attached": False,
+                }
         else:
             content = self._generate_email_content()
+
+        csv_attached = bool(self.report_config.attach_csv and skip_notification is False)
 
         if self.report_config.attach_csv and skip_notification is False:
             with self.get_csv_tempfile() as csv_file:
@@ -67,6 +74,13 @@ class EmailSender(ISender):
                 html_content=content,
                 mime_charset="utf-8",
             )
+
+        return {
+            "channel": "email",
+            "sent": True,
+            "skipped": False,
+            "csv_attached": csv_attached,
+        }
 
     def _generate_email_content(self) -> str:
         """Generate HTML content to be sent by email based on

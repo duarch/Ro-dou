@@ -67,6 +67,8 @@ x-airflow-common: &airflow-common
     _AIRFLOW_WWW_USER_PASSWORD: airflow
 
     AIRFLOW_CONN_EXAMPLE_DATABASE_CONN: postgresql://airflow:airflow@postgres:5432/airflow
+    AIRFLOW_CONN_RODOU_ANALYTICS_DB: mysql://${RODOU_ANALYTICS_USER:-airflow}:${RODOU_ANALYTICS_PASSWORD:-airflow}@${RODOU_ANALYTICS_HOST:-host.docker.internal}:${RODOU_ANALYTICS_PORT:-3306}/${RODOU_ANALYTICS_DB:-rodou_analytics}?charset=utf8mb4
+    RODOU_ANALYTICS_DRY_RUN: 'true'
 
     RO_DOU__DAG_CONF_DIR: /opt/airflow/dags/ro_dou/dag_confs
 
