@@ -38,9 +38,12 @@ class AnalyticsMariaDBHook(BaseHook):
     def resolve_execution_reference(self, *, dag_id: str, owner: str) -> "AnalyticsMariaDBHook.ExecutionReference":
         """Resolve the generated DAG row for the current execution.
 
-        `id_preferencia` is the DAG id stored in the generated DAG contract.
-        `cd_chave_usuario` comes from the DAG owner and is used for auditing.
+        `dag_id` may come with "pref_" prefix (e.g., "pref_12345").
+        Extracts the raw `id_preferencia` for the database query.
         """
+        # Extract id_preferencia from dag_id: "pref_12345" -> "12345"
+        id_preferencia_raw = dag_id.replace("pref_", "", 1) if dag_id.startswith("pref_") else dag_id
+        
         hook = self._mysql_hook()
         query = """
             SELECT id_dag_gerada, id_preferencia
@@ -50,10 +53,12 @@ class AnalyticsMariaDBHook(BaseHook):
             ORDER BY dh_geracao DESC, id_dag_gerada DESC
             LIMIT 1
         """
-        rows = hook.get_records(query, parameters=(dag_id, dag_id))
+        # nm_dag is the full dag_id (possibly with "pref_" prefix as stored in the DB)
+        # id_preferencia is the extracted numeric/string ID without prefix
+        rows = hook.get_records(query, parameters=(dag_id, id_preferencia_raw))
         if not rows:
             raise RuntimeError(
-                f"Could not resolve TB_CLIPPING_DAG_GERADA for dag_id={dag_id!r}"
+                f"Could not resolve TB_CLIPPING_DAG_GERADA for dag_id={dag_id!r}, id_preferencia={id_preferencia_raw!r}"
             )
         id_dag_gerada, id_preferencia = rows[0]
         return AnalyticsMariaDBHook.ExecutionReference(
