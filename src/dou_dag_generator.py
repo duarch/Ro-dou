@@ -418,7 +418,7 @@ class DouDigestDagGenerator:
         if ti:
             execution_data = ti.xcom_pull(task_ids="persist_analytics")
 
-        hook = AnalyticsMariaDBHook(conn_id=self.ANALYTICS_CONN_ID, database=None)
+        hook = AnalyticsMariaDBHook(conn_id=self.ANALYTICS_CONN_ID, database="rodou")
 
         try:
             delivery_results = notifier.send_notification(
@@ -480,14 +480,48 @@ class DouDigestDagGenerator:
 
         The execution row is created before notification and updated after the
         notification task finishes.
+        
+        NOTE: specs.id MUST be prefixed with "pref_" (e.g., "pref_12345").
+        If the prefix is missing, analytics persistence is skipped.
         """
+        # Validate specs.id format: MUST start with "pref_"
+        if not specs.id.startswith("pref_"):
+            logging.warning(
+                "DAG specs.id does not have required 'pref_' prefix: %r. "
+                "Skipping analytics persistence. Expected format: 'pref_<id>'",
+                specs.id
+            )
+            return {
+                "id_execucao": None,
+                "qt_resultados_total": 0,
+                "qt_resultados_enviados": 0,
+                "qt_resultados_novos": 0,
+                "qt_resultados_repetidos": 0,
+                "fl_possui_resultado": 0,
+                "fl_email_enviado": 0,
+                "fl_csv_anexado": 0,
+                "skipped": True,
+                "skip_reason": "missing_pref_prefix",
+            }
+        
         ti = context.get("ti") or context.get("task_instance")
         dag_run = context.get("dag_run")
         logical_date = context.get("logical_date")
 
         if not ti or not dag_run or not logical_date:
             logging.warning("Missing Airflow context for analytics persistence.")
-            return
+            return {
+                "id_execucao": None,
+                "qt_resultados_total": 0,
+                "qt_resultados_enviados": 0,
+                "qt_resultados_novos": 0,
+                "qt_resultados_repetidos": 0,
+                "fl_possui_resultado": 0,
+                "fl_email_enviado": 0,
+                "fl_csv_anexado": 0,
+                "skipped": True,
+                "skip_reason": "missing_context",
+            }
 
         trigger_date = get_trigger_date(context, local_time=True).date()
         if isinstance(specs.owner, list):
@@ -590,6 +624,8 @@ class DouDigestDagGenerator:
                 "fl_possui_resultado": int(bool(unique_result_rows)),
                 "fl_email_enviado": 0,
                 "fl_csv_anexado": 0,
+                "skipped": True,
+                "skip_reason": "dry_run",
             }
 
         hook = AnalyticsMariaDBHook(conn_id=self.ANALYTICS_CONN_ID, database=None)
@@ -611,7 +647,6 @@ class DouDigestDagGenerator:
             id_preferencia=execution_ref.id_preferencia,
             cd_chave_usuario=owner,
             id_status_execucao=9,
-            id_origem_evento=1,
             cd_run_id_airflow=str(dag_run.run_id),
             cd_dag_id_airflow=specs.id,
             cd_state_airflow=getattr(dag_run, "state", None),
@@ -646,6 +681,7 @@ class DouDigestDagGenerator:
             "fl_possui_resultado": fl_possui_resultado,
             "fl_email_enviado": 0,
             "fl_csv_anexado": 0,
+            "skipped": False,
         }
 
     def create_dag(self, specs: DAGConfig, config_file: str) -> DAG:

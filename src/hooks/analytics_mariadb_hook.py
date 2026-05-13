@@ -99,10 +99,12 @@ class AnalyticsMariaDBHook(BaseHook):
         id_preferencia: str,
         cd_chave_usuario: str,
         id_status_execucao: int,
-        id_origem_evento: int,
         cd_run_id_airflow: str,
         cd_dag_id_airflow: str,
         cd_state_airflow: Optional[str],
+        dh_logical_date,
+        dh_data_interval_start,
+        dh_data_interval_end,
         dh_disparo,
         dh_inicio,
         dh_fim,
@@ -124,16 +126,17 @@ class AnalyticsMariaDBHook(BaseHook):
                 id_preferencia,
                 cd_chave_usuario,
                 id_status_execucao,
-                id_origen_evento,
                 cd_run_id_airflow,
                 cd_dag_id_airflow,
                 cd_state_airflow,
+                dh_logical_date,
+                dh_data_interval_start,
+                dh_data_interval_end,
                 tx_retorno_execucao,
                 tx_erro_resumido,
                 dh_disparo,
                 dh_inicio,
                 dh_fim,
-                dt_criacao,
                 qt_resultados_total,
                 qt_resultados_enviados,
                 qt_resultados_novos,
@@ -142,7 +145,7 @@ class AnalyticsMariaDBHook(BaseHook):
                 fl_email_enviado,
                 fl_csv_anexado
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
         """
         params = (
@@ -150,10 +153,12 @@ class AnalyticsMariaDBHook(BaseHook):
             id_preferencia,
             cd_chave_usuario,
             id_status_execucao,
-            id_origem_evento,
             cd_run_id_airflow,
             cd_dag_id_airflow,
             cd_state_airflow,
+            dh_logical_date,
+            dh_data_interval_start,
+            dh_data_interval_end,
             tx_retorno_execucao,
             tx_erro_resumido,
             dh_disparo,
